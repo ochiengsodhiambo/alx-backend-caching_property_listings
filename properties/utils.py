@@ -1,16 +1,20 @@
+import logging
 from django.core.cache import cache
 from .models import Property
 from django_redis import get_redis_connection
+
+# Initialize the logger
+logger = logging.getLogger(__name__)
 
 def get_all_properties():
     """Retrieve all properties, using Redis cache if available."""
     properties = cache.get('all_properties')
     if not properties:
-        print("Cache MISS — fetching from DB")
+        logger.info("Cache MISS — fetching properties from DB")
         properties = Property.objects.all()
         cache.set('all_properties', properties, 3600)  # cache for 1 hour
     else:
-        print("Cache HIT — using cached data")
+        logger.info("Cache HIT — using cached property data")
     return properties
 
 
@@ -29,8 +33,9 @@ def get_redis_cache_metrics():
             "misses": misses,
             "hit_ratio": round(hit_ratio, 2)
         }
-        print(metrics)
+        logger.info(f"Redis Cache Metrics: {metrics}")
         return metrics
+
     except Exception as e:
-        print(f"Error retrieving Redis metrics: {e}")
+        logger.error(f"Error retrieving Redis metrics: {e}")
         return {"error": str(e)}
